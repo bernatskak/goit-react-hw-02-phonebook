@@ -1,82 +1,71 @@
 import React, { Component } from 'react';
 import { nanoid } from 'nanoid';
-import { ContactForm } from './ContactForm/ContactForm';
-import { Filter } from './Filter/Filter';
-import { ContactList } from './ContactList/ContactList';
-
-export class App extends Component {
+import Form from './Form';
+import ContactsList from './ContactsList';
+import Filter from './Filter';
+import styles from './App.module.css';
+class App extends Component {
   state = {
     contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+      { id: nanoid(10), name: 'Rosie Simpson', number: '459-12-56' },
+      { id: nanoid(10), name: 'Hermione Kline', number: '443-89-12' },
+      { id: nanoid(10), name: 'Eden Clements', number: '645-17-79' },
+      { id: nanoid(10), name: 'Annie Copeland', number: '227-91-26' },
     ],
     filter: '',
-    name: '',
-    number: '',
   };
 
-  handleChange = e => {
-    const { name, value } = e.target;
-    this.setState({ [name]: value });
-  };
+  addContact = contact => {
+    const normalName = contact.name.toLowerCase();
+    const isNameInList = this.state.contacts.some(contact =>
+      contact.name.toLowerCase().includes(normalName)
+    );
 
-  handleSubmit = e => {
-    const id = nanoid();
-    const name = e.name;
-    const number = e.number;
-    const contactsLists = [...this.state.contacts];
-
-    if (contactsLists.findIndex(contact => name === contact.name) !== -1) {
-      alert(`${name} is already in contacts.`);
-    } else {
-      contactsLists.push({ name, id, number });
+    if (isNameInList) {
+      alert(`${contact.name} is already in contacts.`);
+      return;
     }
-
-    this.setState({ contacts: contactsLists });
-  };
-
-  handleDelete = e => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== e),
+    contact.id = nanoid(10);
+    this.setState(({ contacts }) => ({
+      contacts: [...contacts, contact],
     }));
   };
 
-  getFilteredContacts = () => {
-    const filterContactsList = this.state.contacts.filter(contact => {
-      return contact.name
-        .toLowerCase()
-        .includes(this.state.filter.toLowerCase());
-    });
+  searchContact = () => {
+    const normalName = this.state.filter.toLowerCase();
+    return this.state.contacts.filter(contact =>
+      contact.name.toLowerCase().includes(normalName)
+    );
+  };
 
-    return filterContactsList;
+  filterContact = e => {
+    this.setState({ filter: e.currentTarget.value });
+  };
+
+  deleteContact = contactId => {
+    this.setState(prevState => ({
+      contacts: prevState.contacts.filter(contact => contact.id !== contactId),
+    }));
+    this.setState({ filter: '' });
   };
 
   render() {
-    const { filter } = this.state;
-
+    const filteredList = this.searchContact();
     return (
-      <div
-        style={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          fontSize: 20,
-          color: '#010101',
-        }}
-      >
-        <h1>Phonebook</h1>
-        <ContactForm handleSubmit={this.handleSubmit} />
-        <h2> Contacts</h2>
-        <Filter filter={filter} handleChange={this.handleChange} />
-        <ContactList
-          contacts={this.getFilteredContacts()}
-          handleDelete={this.handleDelete}
-        />
+      <div className={styles.container}>
+        <h1 className={styles.mainTitle}>Phonebook</h1>
+        <Form onSubmit={this.addContact} />
+        <h2 className={styles.title}>Contacts</h2>
+        <div className={styles.wrap}>
+          <Filter value={this.state.filter} onChange={this.filterContact} />
+          <ContactsList
+            contacts={filteredList}
+            onDeleteContact={this.deleteContact}
+          />
+        </div>
       </div>
     );
   }
 }
+
+export default App;
